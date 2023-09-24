@@ -1,0 +1,13 @@
+VERSION = 1,
+
+option WarpTiles.MinimumRole
+{
+    type = enum,
+    default = 2,
+    numValues = 6,
+
+    valueTranslation = WarpTiles_Enums,
+
+    page = WarpTiles,
+    translation = WarpTiles_MinimumRole,
+}

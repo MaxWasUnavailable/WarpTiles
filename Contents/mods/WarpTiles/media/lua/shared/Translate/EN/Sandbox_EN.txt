@@ -1,0 +1,13 @@
+Sandbox_EN = {
+	Sandbox_WarpTiles = "Warp Tiles",
+
+	Sandbox_WarpTiles_MinimumRole = "Minimum Role",
+	Sandbox_WarpTiles_MinimumRole_Tooltip = "The minimum role required to create warp tiles.",
+
+	Sandbox_WarpTiles_Enums_option1 = "none",
+	Sandbox_WarpTiles_Enums_option2 = "observer",
+	Sandbox_WarpTiles_Enums_option3 = "gm",
+	Sandbox_WarpTiles_Enums_option4 = "overseer",
+	Sandbox_WarpTiles_Enums_option5 = "moderator",
+	Sandbox_WarpTiles_Enums_option6 = "admin"
+}
