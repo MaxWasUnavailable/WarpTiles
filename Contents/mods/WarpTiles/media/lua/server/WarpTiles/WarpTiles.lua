@@ -106,15 +106,14 @@ end
 --- The link information for the tile being linked to.
 WarpTiles.saveTileData = function(_tile, _thisLink, _otherLink)
     if _thisLink.tileType == WarpTiles.tileType.source then
-        print("DEBUG: Saving source tile data for tile " .. _tile:getX() .. ", " .. _tile:getY() .. ", " .. _tile:getZ())
+        print("Saving source tile data for tile " .. _tile:getX() .. ", " .. _tile:getY() .. ", " .. _tile:getZ())
         _tile:getModData().WarpTiles = {
-                x = _otherLink[1]:getX(),
-                y = _otherLink[1]:getY(),
-                z = _otherLink[1]:getZ()
+                x = _otherLink.tile:getX(),
+                y = _otherLink.tile:getY(),
+                z = _otherLink.tile:getZ()
         }
+        _tile:transmitModdata()
     end
-
-    _tile:transmitModdata()
 end
 
 WarpTiles.removeTileData = function(_tile)
@@ -166,8 +165,15 @@ WarpTiles.saveLink = function(_player, _tile, _tileType)
         return
     end
 
-    local firstLink = {inProgressLink[2], inProgressLink[3]}
-    local secondLink = {_tile, _tileType}
+    local firstLink = {
+        tile = inProgressLink[2],
+        tileType = inProgressLink[3]
+    }
+
+    local secondLink = {
+        tile = _tile,
+        tileType = _tileType
+    }
 
     print("Saving link (performed by " .. playerObj:getUsername() .. ")")
 
@@ -176,8 +182,8 @@ WarpTiles.saveLink = function(_player, _tile, _tileType)
         destination = secondLink
     }
 
-    WarpTiles.saveTileData(firstLink[1], firstLink, secondLink)
-    WarpTiles.saveTileData(secondLink[1], secondLink, firstLink)
+    WarpTiles.saveTileData(firstLink.tile, firstLink, secondLink)
+    WarpTiles.saveTileData(secondLink.tile, secondLink, firstLink)
 
     local linkTable = WarpTiles.getModData()
 
@@ -201,12 +207,36 @@ WarpTiles.removeLink = function(_tile)
     local linkTable = WarpTiles.getModData()
 
     for i, link in ipairs(linkTable) do
-        if link.source[1] == _tile or link.destination[1] == _tile then
-            WarpTiles.removeTileData(link.source[1])
-            WarpTiles.removeTileData(link.destination[1])
+        if not link.source then
+            print("ERROR: No source found for link " .. i)
+            return
+        end
+        if not link.destination then
+            print("ERROR: No destination found for link " .. i)
+            return
+        end
+        if not link.source.tile then
+            print("ERROR: No source tile found for link " .. i)
+            return
+        end
+        if not link.destination.tile then
+            print("ERROR: No destination tile found for link " .. i)
+            return
+        end
+        if link.source[1] then
+            print("ERROR: Source is a table for link " .. i)
+            return
+        end
+        if link.destination[1] then
+            print("ERROR: Destination is a table for link " .. i)
+            return
+        end
+        if link.source.tile == _tile or link.destination.tile == _tile then
+            WarpTiles.removeTileData(link.source.tile)
+            WarpTiles.removeTileData(link.destination.tile)
             table.remove(linkTable, i)
             WarpTiles.syncModData()
-            print("Link removed")
+            print("Link removed at coordinate " .. _tile:getX() .. ", " .. _tile:getY() .. ", " .. _tile:getZ())
             return
         end
     end
@@ -264,8 +294,8 @@ WarpTiles.warpPlayer = function(_player, _tile)
         return
     end
 
-    _player.teleportTo(destination.x, destination.y, destination.z)
-    print("Player " .. _player:getUsername() .. " warped to " .. destination:getX() .. ", " .. destination:getY() .. ", " .. destination:getZ())
+    _player:setPosition(destination.x, destination.y, destination.z)
+    print("Player " .. _player:getUsername() .. " warped to " .. destination.x .. ", " .. destination.y .. ", " .. destination.z)
 
     HaloTextHelper.addText(_player, "DEBUG: TELEPORTED!", HaloTextHelper.getColorGreen())
 end

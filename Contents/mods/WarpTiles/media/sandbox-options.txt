@@ -3,7 +3,7 @@ VERSION = 1,
 option WarpTiles.MinimumRole
 {
     type = enum,
-    default = 2,
+    default = 3,
     numValues = 6,
 
     valueTranslation = WarpTiles_Enums,
