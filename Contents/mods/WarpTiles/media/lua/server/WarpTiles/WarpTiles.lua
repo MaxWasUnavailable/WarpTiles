@@ -37,7 +37,7 @@ WarpTiles.tileType = {
     destination = "WarpTiles.WarpTileDestination"
 }
 
---- Table to store in-progress links. Format is {playerID, tile, tileType}
+--- Table to store in-progress links. Format is playerID: {tile, tileType}
 WarpTiles.inProgressLink = {}
 
 -- Permission helpers
@@ -97,35 +97,67 @@ WarpTiles.hasLinkInProgress = function(_player)
     return WarpTiles.inProgressLink[tostring(_player)] ~= nil
 end
 
---- Save mod data for a tile.
+--- Convert a tile to an x,y,z table.
 ---@param _tile IsoObject
---- The tile for which to save mod data.
+--- The tile to be converted.
+---@return table
+--- An x,y,z table representing the tile.
+WarpTiles.toXYZTable = function(_tile)
+    return {
+        x = _tile:getX(),
+        y = _tile:getY(),
+        z = _tile:getZ()
+    }
+end
+
+--- Check if two x,y,z tables are equal.
+---@param _table1 table
+--- An x,y,z table to be compared.
+---@param _table2 table
+--- An x,y,z table to be compared.
+---@return Boolean
+--- True if the tables are equal, false otherwise.
+WarpTiles.XYZTableEquals = function(_table1, _table2)
+    return _table1.x == _table2.x and _table1.y == _table2.y and _table1.z == _table2.z
+end
+
+--- Save mod data for a tile.
+---@param _tile table
+--- An x,y,z table representing a tile for which to save mod data.
 ---@param _thisLink table
---- The link information for the tile being saved.
+--- The link information for the tile representation being saved.
 ---@param _otherLink table
---- The link information for the tile being linked to.
+--- The link information for the tile representation being linked to.
 WarpTiles.saveTileData = function(_tile, _thisLink, _otherLink)
+    -- TODO: should probably take an IsoObject instead of a table
     if _thisLink.tileType == WarpTiles.tileType.source then
-        print("Saving source tile data for tile " .. _tile:getX() .. ", " .. _tile:getY() .. ", " .. _tile:getZ())
-        _tile:getModData().WarpTiles = {
-                x = _otherLink.tile:getX(),
-                y = _otherLink.tile:getY(),
-                z = _otherLink.tile:getZ()
-        }
-        _tile:transmitModdata()
+        print("Saving source tile data for tile " .. _tile.x .. ", " .. _tile.y .. ", " .. _tile.z)
+
+        local tile = getCell():getGridSquare(_tile.x, _tile.y, _tile.z)
+        tile:getModData().WarpTiles = _otherLink.tile
+
+        tile:transmitModdata()
     end
 end
 
+--- Remove mod data for a tile.
+---@param _tile table
+--- An x,y,z table representing a tile for which to remove mod data.
 WarpTiles.removeTileData = function(_tile)
-    local tileData = _tile:getModData().WarpTiles
+    -- TODO: should probably take an IsoObject instead of a table
+    print("Removing tile data for tile " .. _tile.x .. ", " .. _tile.y .. ", " .. _tile.z)
+
+    local tile = getCell():getGridSquare(_tile.x, _tile.y, _tile.z)
+    local tileData = tile:getModData().WarpTiles
 
     if not tileData then
+        print("ERROR: No tile data found to remove for tile " .. _tile.x .. ", " .. _tile.y .. ", " .. _tile.z)
         return
     end
 
-    _tile:getModData().WarpTiles = nil
+    tile:getModData().WarpTiles = nil
 
-    _tile:transmitModdata()
+    tile:transmitModdata()
 end
 
 --- Check if a tile has a link.
@@ -142,6 +174,12 @@ WarpTiles.tileHasLink = function(_tile)
     return true
 end
 
+--- Get the destination of a tile.
+---@param _tile IsoObject
+--- The tile for which to get the destination.
+---@return table
+--- An x,y,z table representing the destination of the tile.
+--- Returns nil if no destination is found.
 WarpTiles.getTileDestination = function(_tile)
     local tileData = _tile:getModData().WarpTiles
 
@@ -150,12 +188,16 @@ WarpTiles.getTileDestination = function(_tile)
         return nil
     end
 
-    print("DEBUG: Tile data found for tile " .. _tile:getX() .. ", " .. _tile:getY() .. ", " .. _tile:getZ() .. ": " .. tileData.x .. ", " .. tileData.y .. ", " .. tileData.z)
-
     return tileData
 end
 
 --- Save a link between two tiles. Requires an in-progress link to exist.
+---@param _player Integer
+--- To be used as the key for the inProgressLink table.
+---@param _tile IsoObject
+--- The tile to be linked to the in-progress link.
+---@param _tileType String
+--- The type of tile to be linked to the in-progress link.
 WarpTiles.saveLink = function(_player, _tile, _tileType)
     local inProgressLink = WarpTiles.inProgressLink[tostring(_player)]
     local playerObj = getSpecificPlayer(_player)
@@ -166,12 +208,12 @@ WarpTiles.saveLink = function(_player, _tile, _tileType)
     end
 
     local firstLink = {
-        tile = inProgressLink[2],
-        tileType = inProgressLink[3]
+        tile = WarpTiles.toXYZTable(inProgressLink[1]),
+        tileType = inProgressLink[2]
     }
 
     local secondLink = {
-        tile = _tile,
+        tile = WarpTiles.toXYZTable(_tile),
         tileType = _tileType
     }
 
@@ -195,7 +237,6 @@ WarpTiles.saveLink = function(_player, _tile, _tileType)
     HaloTextHelper.addText(playerObj, "Warp link saved!", HaloTextHelper.getColorGreen())
 
     print("DEBUG: There are now " .. #linkTable .. " links in the link table.")
-    HaloTextHelper.addText(playerObj, "There are now " .. #linkTable .. " warp links.", HaloTextHelper.getColorWhite())
 
     WarpTiles.cancelLink(_player)
 end
@@ -206,44 +247,20 @@ end
 WarpTiles.removeLink = function(_tile)
     local linkTable = WarpTiles.getModData()
 
-    for i, link in ipairs(linkTable) do
-        if not link.source then
-            print("ERROR: No source found for link " .. i)
-            return
-        end
-        if not link.destination then
-            print("ERROR: No destination found for link " .. i)
-            return
-        end
-        if not link.source.tile then
-            print("ERROR: No source tile found for link " .. i)
-            return
-        end
-        if not link.destination.tile then
-            print("ERROR: No destination tile found for link " .. i)
-            return
-        end
-        if link.source[1] then
-            print("ERROR: Source is a table for link " .. i)
-            return
-        end
-        if link.destination[1] then
-            print("ERROR: Destination is a table for link " .. i)
-            return
-        end
-        if link.source.tile == _tile or link.destination.tile == _tile then
+    for i, link in pairs(linkTable) do
+        if WarpTiles.XYZTableEquals(link.source.tile, WarpTiles.toXYZTable(_tile)) or WarpTiles.XYZTableEquals(link.destination.tile, WarpTiles.toXYZTable(_tile)) then
             WarpTiles.removeTileData(link.source.tile)
             WarpTiles.removeTileData(link.destination.tile)
+
             table.remove(linkTable, i)
             WarpTiles.syncModData()
+
             print("Link removed at coordinate " .. _tile:getX() .. ", " .. _tile:getY() .. ", " .. _tile:getZ())
-            return
         end
     end
 
     print("ERROR: No link found to remove")
 end
-
 
 --- Create a link entry in the in-progress link table. If the player already has a link in progress, then the two tiles will be linked together through the saveLink function.
 ---@param _player Integer
@@ -256,6 +273,7 @@ WarpTiles.createLink = function(_player, _tile, _tileType)
     local playerObj = getSpecificPlayer(_player)
     if WarpTiles.tileHasLink(_tile) then
         -- If the tile already has a link, then we need to do nothing.
+        -- TODO: might be redundant due to context menu options. Kept around for now just in case.
         HaloTextHelper.addText(playerObj, "Tile already has a link!", HaloTextHelper.getColorRed())
         return
     end
@@ -264,7 +282,7 @@ WarpTiles.createLink = function(_player, _tile, _tileType)
         WarpTiles.saveLink(_player, _tile, _tileType)
     else
         -- If the player doesn't have a link in progress, then we need to create one.
-        WarpTiles.inProgressLink[tostring(_player)] = {_player, _tile, _tileType}
+        WarpTiles.inProgressLink[tostring(_player)] = {_tile, _tileType}
         HaloTextHelper.addText(playerObj, "Link started!", HaloTextHelper.getColorGreen())
     end
 end
@@ -276,7 +294,7 @@ WarpTiles.cancelLink = function(_player)
     if WarpTiles.hasLinkInProgress(_player) then
         -- If the player has a link in progress, then we need to cancel it.
         WarpTiles.inProgressLink[tostring(_player)] = nil
-        print("Link cancelled")
+        print("In-progress link canceled for player " .. getSpecificPlayer(_player):getUsername())
     end
     -- If the player doesn't have a link in progress, then we don't need to do anything.
 end
@@ -296,11 +314,9 @@ WarpTiles.warpPlayer = function(_player, _tile)
 
     _player:setPosition(destination.x, destination.y, destination.z)
     print("Player " .. _player:getUsername() .. " warped to " .. destination.x .. ", " .. destination.y .. ", " .. destination.z)
-
-    HaloTextHelper.addText(_player, "DEBUG: TELEPORTED!", HaloTextHelper.getColorGreen())
 end
 
--- Event hooks
+-- Context menu
 
 --- Add the context menu options to the right click menu.
 ---@param _player Integer
@@ -308,6 +324,12 @@ end
 ---@param _square IsoGridSquare
 local function addOptions(_player, _context, _square)
     if not hasAccess(SandboxVars.WarpTiles.MinimumRole) then
+        return
+    end
+
+    if WarpTiles.tileHasLink(_square) then
+        -- If the tile already has a link, then we can offer the option to remove it.
+        _context:addOption("Remove Warp Link", _square, WarpTiles.removeLink)
         return
     end
 
@@ -320,13 +342,9 @@ local function addOptions(_player, _context, _square)
     end
 
     _context:addOption(linkText .. " (Source)", _player, WarpTiles.createLink, _square, WarpTiles.tileType.source)
-
-    if WarpTiles.tileHasLink(_square) then
-        -- If the tile already has a link, then we can offer the option to remove it.
-        _context:addOption("Remove Warp Link", _square, WarpTiles.removeLink)
-    end
 end
 
+-- Event hooks
 
 --- Get the tile at the right click position, and add the context menu options to it by calling the addOptions function.
 ---@param _player Integer
@@ -346,6 +364,7 @@ end
 ---@param _player IsoPlayer
 local function checkForWarp(_player)
     local playerTile = _player:getCurrentSquare()
+
     if not playerTile then
         return
     end
@@ -357,6 +376,7 @@ end
 
 -- Init
 
+--- Initialize the mod and add event hooks.
 local function init()
     Events.OnTick.Remove(init)
 
@@ -368,6 +388,6 @@ local function init()
     print(WarpTiles.modName .. " " .. WarpTiles.modVersion .. " initialized.")
 end
 
--- Event hooks
+-- Init hook
 
 Events.OnTick.Add(init)
