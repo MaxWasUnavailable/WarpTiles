@@ -339,9 +339,10 @@ local function addOptions(_player, _context, _square)
         linkText = "Finish Warp Link"
         _context:addOption("Cancel Link", _player, WarpTiles.cancelLink)
         _context:addOption(linkText .. " (Destination)", _player, WarpTiles.createLink, _square, WarpTiles.tileType.destination)
+    else
+        -- TODO: Remove else once reliable system to prevent teleportation spam looping is implemented. (Time-based cooldown? Check to prevent teleportation from destination tile after teleportation --> Walk away from tile first?)
+        _context:addOption(linkText .. " (Source)", _player, WarpTiles.createLink, _square, WarpTiles.tileType.source)
     end
-
-    _context:addOption(linkText .. " (Source)", _player, WarpTiles.createLink, _square, WarpTiles.tileType.source)
 end
 
 -- Event hooks
