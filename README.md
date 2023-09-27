@@ -7,7 +7,7 @@ There are 2 types of tiles:
 
 There are two possible configurations:
 - One source tile and one destination tile
-- Two source tiles
+- Two source tiles **NOTICE: THIS TYPE OF LINK IS CURRENTLY DISABLED**
 
 ## One source tile and one destination tile
 This is the simplest configuration. You can teleport from the source tile to the destination tile.
