@@ -256,6 +256,7 @@ WarpTiles.removeLink = function(_tile)
             WarpTiles.syncModData()
 
             print("Link removed at coordinate " .. _tile:getX() .. ", " .. _tile:getY() .. ", " .. _tile:getZ())
+            return
         end
     end
 
