@@ -9,7 +9,7 @@ WarpTiles = {}
 
 -- Mod info
 WarpTiles.modName = "WarpTiles"
-WarpTiles.modVersion = "1.0.1"
+WarpTiles.modVersion = "1.1.0"
 WarpTiles.modAuthor = "Max"
 WarpTiles.modDescription = "Adds one-way and two-way warp tile systems to the game."
 
@@ -323,7 +323,7 @@ end
 ---@param _player Integer
 ---@param _context KahluaTable
 ---@param _square IsoGridSquare
-local function addOptions(_player, _context, _square)
+local function addCreationOptions(_player, _context, _square)
     if not hasAccess(SandboxVars.WarpTiles.MinimumRole) then
         return
     end
@@ -346,6 +346,17 @@ local function addOptions(_player, _context, _square)
     end
 end
 
+local function addRightClickTPOptions(_player, _context, _square)
+    if not hasAccess(SandboxVars.WarpTiles.MinimumRoleRightClickTP) then
+        return
+    end
+
+    if WarpTiles.tileHasLink(_square) then
+        -- If the tile has a link, then we can offer the option to teleport to its destination.
+        _context:addOption("Teleport to Warp Destination", getSpecificPlayer(_player), WarpTiles.warpPlayer, _square)
+    end
+end
+
 -- Event hooks
 
 --- Get the tile at the right click position, and add the context menu options to it by calling the addOptions function.
@@ -356,7 +367,8 @@ local function contextMenuHook(_player, _context, _worldObjects)
     for i, v in ipairs(_worldObjects) do
         square = v:getSquare();
         if square then
-            addOptions(_player, _context, square)
+            addCreationOptions(_player, _context, square)
+            addRightClickTPOptions(_player, _context, square)
             return
         end
     end
@@ -365,6 +377,10 @@ end
 --- Check if a player has moved onto a warp tile.
 ---@param _player IsoPlayer
 local function checkForWarp(_player)
+    if not SandboxVars.WarpTiles.WalkTPEnabled then
+        return
+    end
+
     local playerTile = _player:getCurrentSquare()
 
     if not playerTile then
