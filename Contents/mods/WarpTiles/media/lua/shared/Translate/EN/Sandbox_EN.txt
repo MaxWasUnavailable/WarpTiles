@@ -1,8 +1,14 @@
 Sandbox_EN = {
 	Sandbox_WarpTiles = "Warp Tiles",
 
-	Sandbox_WarpTiles_MinimumRole = "Minimum Role",
-	Sandbox_WarpTiles_MinimumRole_Tooltip = "The minimum role required to create warp tiles.",
+	Sandbox_WarpTiles_MinimumRole = "Minimum Role - Create/Remove",
+	Sandbox_WarpTiles_MinimumRole_Tooltip = "The minimum role required to create and remove warp tiles.",
+
+	Sandbox_WarpTiles_MinimumRoleRightClickTP = "Minimum role - right click TP",
+	Sandbox_WarpTiles_MinimumRoleRightClickTP_Tooltip = "The minimum role required to show the option to teleport when right-clicking on tiles. This is an alternative (or addition) to the default walking on tiles teleportation system.",
+
+	Sandbox_WarpTiles_WalkTPEnabled = "Walk on tiles TP enabled",
+	Sandbox_WarpTiles_WalkTPEnabled_Tooltip = "Whether or not walking on tiles should teleport players.",
 
 	Sandbox_WarpTiles_Enums_option1 = "none",
 	Sandbox_WarpTiles_Enums_option2 = "observer",

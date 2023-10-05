@@ -11,3 +11,24 @@ option WarpTiles.MinimumRole
     page = WarpTiles,
     translation = WarpTiles_MinimumRole,
 }
+
+option WarpTiles.WalkTPEnabled
+{
+    type = boolean,
+    default = true,
+
+    page = WarpTiles,
+    translation = WarpTiles_WalkTPEnabled,
+}
+
+option WarpTiles.MinimumRoleRightClickTP
+{
+    type = enum,
+    default = 3,
+    numValues = 6,
+
+    valueTranslation = WarpTiles_Enums,
+
+    page = WarpTiles,
+    translation = WarpTiles_MinimumRoleRightClickTP,
+}
